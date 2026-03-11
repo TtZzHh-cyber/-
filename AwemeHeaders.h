@@ -21,6 +21,15 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (void)dyyy_applyGlobalTransparency;
 @end
 
+// 推荐页数据控制器（低赞过滤用）
+@interface AWEListDataController : NSObject
+@property (nonatomic, strong) NSMutableArray *dataSource;
+@end
+
+@interface AWEHotListDataController : AWEListDataController
+- (id)transferAwemeListIfNeededWithArray:(id)arg1 isInitFetch:(BOOL)arg2;
+@end
+
 // 音量控制
 @interface AVSystemController : NSObject
 + (instancetype)sharedAVSystemController;
