@@ -4316,6 +4316,43 @@ static NSHashTable *processedParentViews = nil;
     %orig;
 }
 %end
+// 推荐页低赞视频过滤
+// =============================================
+%hook AWEHotListDataController
+
+- (id)transferAwemeListIfNeededWithArray:(id)arg1 isInitFetch:(BOOL)arg2 {
+    NSArray *orig = %orig;
+    if (!orig || orig.count == 0) return orig;
+
+    // 读取 DYYY 设置中的低赞阈值（复用已有 key：DYYYFilterLowLikes）
+    NSString *thresholdStr = DYYYGetString(@"DYYYFilterLowLikes");
+    NSInteger threshold = thresholdStr.length > 0 ? [thresholdStr integerValue] : 0;
+    if (threshold <= 0) return orig;
+
+    NSMutableArray *filtered = [NSMutableArray arrayWithCapacity:orig.count];
+    for (id obj in orig) {
+        if (![obj isKindOfClass:%c(AWEAwemeModel)]) {
+            [filtered addObject:obj];
+            continue;
+        }
+        AWEAwemeModel *m = (AWEAwemeModel *)obj;
+        // 广告直接放行，不过滤
+        if (m.isAds) {
+            [filtered addObject:obj];
+            continue;
+        }
+        // 获取点赞数，低于阈值则过滤
+        NSNumber *digg = m.statistics ? m.statistics.diggCount : nil;
+        if (!digg || digg.integerValue >= threshold) {
+            [filtered addObject:obj];
+        }
+    }
+    return filtered;
+}
+
+%end
+
+
 
 %hook IESLiveHotMessageView
 - (void)layoutSubviews {
@@ -4402,19 +4439,7 @@ static NSHashTable *processedParentViews = nil;
         }
     }
 
-    // 只有当shareRecExtra不为空时才过滤点赞量低的视频和关键词
-    if ([self.referString isEqualToString:@"homepage_hot"]) {
-        NSInteger filterLowLikesThreshold = DYYYGetInteger(@"DYYYFilterLowLikes");
-        // 过滤低点赞量视频
-        if (filterLowLikesThreshold > 0) {
-            AWESearchAwemeExtraModel *searchExtraModel = [self searchExtraModel];
-            if (!searchExtraModel) {
-                AWEAwemeStatisticsModel *statistics = self.statistics;
-                if (statistics && statistics.diggCount) {
-                    shouldFilterLowLikes = statistics.diggCount.integerValue < filterLowLikesThreshold;
-                }
-            }
-        }
+
 
         // 过滤包含特定关键词的视频
         if (keywordsList.count > 0) {
@@ -4456,7 +4481,7 @@ static NSHashTable *processedParentViews = nil;
                 shouldFilterTime = (timeDifference > threshold);
             }
         }
-    }
+    
 
     // 检查是否为HDR视频
     if (filterHDR && self.video && self.video.bitrateModels) {
