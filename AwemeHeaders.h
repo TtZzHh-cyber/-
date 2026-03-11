@@ -21,106 +21,47 @@ typedef NS_ENUM(NSUInteger, DYEdgeMode) {
 - (void)dyyy_applyGlobalTransparency;
 @end
 
-// 推荐页数据控制器（低赞过滤用）
-@interface AWEListDataController : NSObject
-@property (nonatomic, strong) NSMutableArray *dataSource;
-@end
+//
+//  LowKillerHeaders.h
+//  低赞杀手头文件
+//  @cookieodd
+//
+//  说明：此文件仅导入抖音头文件，不重复定义任何类
+//
 
-// 低赞杀手头文件
-// @cookieodd
+#ifndef LowKillerHeaders_h
+#define LowKillerHeaders_h
 
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
-#ifndef AWE_AWEME_HEADERS_LOWLIKES
+// 导入完整的抖音头文件（第一个文件）
+#import "AwemeHeaders.h"
 
-#define AWE_AWEME_HEADERS_LOWLIKES
-
-// 视频统计模型
-#ifndef AWEAwemeStatisticsModel
-@interface AWEAwemeStatisticsModel : NSObject
-@property (nonatomic, strong) NSNumber *diggCount;
+// 如果需要添加额外属性，使用分类（Category）
+// 示例：为AWEAwemeModel添加低赞杀手专用属性
+@interface AWEAwemeModel (LowKiller)
+@property (nonatomic, assign) BOOL lk_isLowLiked;  // 运行时关联
+@property (nonatomic, assign) BOOL lk_shouldHide;  // 运行时关联
+- (BOOL)lk_isLowLikedVideo:(NSInteger)threshold;
 @end
-#endif
 
-// 直播模型
-#ifndef AWELiveFollowFeedCellModel
-@interface AWELiveFollowFeedCellModel : NSObject
+// 为AWEListDataController添加过滤方法
+@interface AWEListDataController (LowKiller)
+- (NSArray *)lk_filteredDataSourceWithThreshold:(NSInteger)threshold;
+- (void)lk_removeLowLikedVideos:(NSInteger)threshold;
 @end
-#endif
 
-// 用户模型
-#ifndef AWEUserModel
-@interface AWEUserModel : NSObject
-@property (nonatomic, copy) NSString *nickname;
-@property (nonatomic, copy) NSString *shortID;
-@end
-#endif
+// 常量定义
+#define LOW_LIKE_THRESHOLD 100
+#define LOW_LIKE_NOTIFICATION @"LowKillerDidHideVideosNotification"
 
-// 视频模型
-#ifndef AWEAwemeModel
-@interface AWEAwemeModel : NSObject
-@property (nonatomic, strong) AWEAwemeStatisticsModel *statistics;
-@property (nonatomic, assign) BOOL isAds;
-@property (nonatomic, copy) NSString *descriptionString;
-@property (nonatomic, strong) id hotSpotLynxCardModel;
-@property (nonatomic, strong) AWELiveFollowFeedCellModel *cellRoom;
-@property (nonatomic, strong) AWEUserModel *author;
-@end
-#endif
+// 工具函数
+static inline BOOL LKIsLowLikedVideo(AWEAwemeModel *video, NSInteger threshold) {
+    return video.statistics.diggCount.integerValue < threshold && !video.isAds;
+}
 
-// 推荐页数据控制器
-#ifndef AWEListDataController
-@interface AWEListDataController : NSObject
-@property (nonatomic, strong) NSMutableArray *dataSource;
-@end
-#endif
-
-#ifndef AWEHotListDataController
-@interface AWEHotListDataController : AWEListDataController
-- (id)transferAwemeListIfNeededWithArray:(id)arg1 isInitFetch:(BOOL)arg2;
-@end
-#endif
-
-// 设置项模型
-#ifndef AWESettingItemModel
-@interface AWESettingItemModel : NSObject
-@property (nonatomic, copy) NSString *identifier;
-@property (nonatomic, copy) NSString *title;
-@property (nonatomic, copy) NSString *detail;
-@property (nonatomic, copy) NSString *svgIconImageName;
-@property (nonatomic, assign) NSInteger cellType;
-@property (nonatomic, assign) NSInteger colorStyle;
-@property (nonatomic, assign) BOOL isEnable;
-@property (nonatomic, copy) void (^cellTappedBlock)(void);
-- (void)refreshCell;
-@end
-#endif
-
-// 设置分区模型
-#ifndef AWESettingSectionModel
-@interface AWESettingSectionModel : NSObject
-@property (nonatomic, assign) NSInteger type;
-@property (nonatomic, assign) CGFloat sectionHeaderHeight;
-@property (nonatomic, copy) NSString *sectionHeaderTitle;
-@property (nonatomic, strong) NSArray *itemArray;
-@end
-#endif
-
-// 设置ViewModel
-#ifndef AWESettingBaseViewModel
-@interface AWESettingBaseViewModel : NSObject
-@property (nonatomic, weak) id controllerDelegate;
-@property (nonatomic, strong) NSArray *sectionDataArray;
-@end
-#endif
-
-#ifndef AWESettingsViewModel
-@interface AWESettingsViewModel : AWESettingBaseViewModel
-@end
-#endif
-
-#endif
+#endif /* LowKillerHeaders_h */
 
 @interface AWEHotListDataController : AWEListDataController
 - (id)transferAwemeListIfNeededWithArray:(id)arg1 isInitFetch:(BOOL)arg2;
